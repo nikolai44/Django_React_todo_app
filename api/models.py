@@ -4,7 +4,7 @@ import simplejson
 
 class TaskQuerySet(models.QuerySet):
 	def serialize(self):
-		values = list(self.values('pk', 'title', 'completed'))
+		values = list(self.values('id', 'title', 'completed'))
 		return simplejson.dumps(values)
 
 

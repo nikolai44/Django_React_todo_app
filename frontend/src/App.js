@@ -78,18 +78,18 @@ class App extends React.Component {
     var csrftoken = this.getCookie('csrftoken')
 
     var url = 'http://127.0.0.1:8000/api/task/'
+    var method = 'POST'
 
     if(this.state.editing == true){
-      url = `http://127.0.0.1:8000/api/task-update/${ this.state.activeItem.id}/`
+      url = `http://127.0.0.1:8000/api/task/${this.state.activeItem.id}/`
+      method = 'PUT'
       this.setState({
         editing:false
       })
     }
 
-
-
     fetch(url, {
-      method:'POST',
+      method:method,
       headers:{
         'Content-type':'application/json',
         'X-CSRFToken':csrftoken,
@@ -121,7 +121,7 @@ class App extends React.Component {
   deleteItem(task){
     var csrftoken = this.getCookie('csrftoken')
 
-    fetch(`http://127.0.0.1:8000/api/task-delete/${task.id}/`, {
+    fetch(`http://127.0.0.1:8000/api/task/${task.id}/`, {
       method:'DELETE',
       headers:{
         'Content-type':'application/json',
@@ -138,10 +138,10 @@ class App extends React.Component {
 
     task.completed = !task.completed
     var csrftoken = this.getCookie('csrftoken')
-    var url = `http://127.0.0.1:8000/api/task-update/${task.id}/`
+    var url = `http://127.0.0.1:8000/api/task/${task.id}/`
 
       fetch(url, {
-        method:'POST',
+        method:'PUT',
         headers:{
           'Content-type':'application/json',
           'X-CSRFToken':csrftoken,

@@ -1,7 +1,6 @@
 from django.http.response import JsonResponse, HttpResponse
 from django.views import View
 from .models import TaskModel
-from .forms import TaskForm
 import simplejson
 
 
@@ -21,21 +20,25 @@ class TaskDetailView(View):
 
 	def post(self, request, *args, **kwargs):
 		"""CREATE new task"""
-		print(request.body)
-		form = TaskForm(simplejson.loads(request.body))
-		if form.is_valid():
-			form.save()
-			return HttpResponse(status=200)
-		errors = simplejson.dumps(form.errors)
-		return HttpResponse(errors, status=200, content_type='application/json')
+		data = simplejson.loads(request.body)
+		task = TaskModel()
+		task.title = data['title']
+		task.completed = data['completed']
+		task.save()
+		return HttpResponse(status=200)
 
 	def put(self, request, task_id, *args, **kwargs):
 		"""UPDATE task by task_id"""
-		pass
+		data = simplejson.loads(request.body)
+		if not TaskModel.objects.filter(id=task_id).exists():
+			return HttpResponse(status=400)
+		task = TaskModel.objects.get(id=task_id)
+		task.title = data['title']
+		task.completed = data['completed']
+		task.save()
+		return HttpResponse(status=200)
 
 	def delete(self, request, task_id, *args, **kwargs):
 		"""DELETE by task_id"""
 		TaskModel.objects.get(id=task_id).delete()
 		return HttpResponse(status=200)
-
-
