@@ -1,44 +1,53 @@
-from django.http.response import JsonResponse, HttpResponse
-from django.views import View
+from django.http import Http404
+from .serializers import TaskSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from .models import TaskModel
-import simplejson
 
 
-class TaskListView(View):
+class TaskListView(APIView):
 	"""all task list"""
 	def get(self, request):
-		data = TaskModel.objects.all().serialize()
-		return HttpResponse(data, status=200, content_type='application/json')
+		queryset = TaskModel.objects.all().order_by('-id')
+		serializer = TaskSerializer(queryset, many=True)
+		return Response(serializer.data)
 
 
-class TaskDetailView(View):
+class TaskDetailView(APIView):
 	"""CRUD one task"""
-	def get(self, request, task_id, *args, **kwargs):
+	def get_object(self, pk):
+		try:
+			return TaskModel.objects.get(pk=pk)
+		except TaskModel.DoesNotExist:
+			raise Http404
+
+	def get(self, request, task_id):
 		"""RETRIEVE task by task_id"""
-		data = TaskModel.objects.get(id=task_id).serialize()
-		return HttpResponse(data, status=200, content_type='application/json')
+		query = TaskModel.objects.get(id=task_id)
+		serializer = TaskSerializer(query)
+		return Response(serializer.data)
 
-	def post(self, request, *args, **kwargs):
+	def post(self, request):
 		"""CREATE new task"""
-		data = simplejson.loads(request.body)
 		task = TaskModel()
-		task.title = data['title']
-		task.completed = data['completed']
-		task.save()
-		return HttpResponse(status=200)
+		serializer = TaskSerializer(task, data=request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return Response(request.data, status=status.HTTP_201_CREATED)
+		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-	def put(self, request, task_id, *args, **kwargs):
+	def put(self, request, task_id):
 		"""UPDATE task by task_id"""
-		data = simplejson.loads(request.body)
-		if not TaskModel.objects.filter(id=task_id).exists():
-			return HttpResponse(status=400)
-		task = TaskModel.objects.get(id=task_id)
-		task.title = data['title']
-		task.completed = data['completed']
-		task.save()
-		return HttpResponse(status=200)
+		task = self.get_object(task_id)
+		serializer = TaskSerializer(task, data=request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return Response(request.data, status=status.HTTP_201_CREATED)
+		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-	def delete(self, request, task_id, *args, **kwargs):
+	def delete(self, request, task_id):
 		"""DELETE by task_id"""
-		TaskModel.objects.get(id=task_id).delete()
-		return HttpResponse(status=200)
+		task = self.get_object(task_id)
+		task.delete()
+		return Response(status=status.HTTP_204_NO_CONTENT)
